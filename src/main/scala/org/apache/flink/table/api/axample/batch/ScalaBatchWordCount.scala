@@ -11,10 +11,10 @@ object ScalaBatchWordCount extends App {
   val tEnv = BatchTableEnvironment.create(env)
 
   val path = this.getClass.getClassLoader.getResource("words.txt").getPath
-  tEnv.connect(new FileSystem().path(path))
-    .withFormat(new OldCsv().field("line", Types.STRING).lineDelimiter("\n"))
-    .withSchema(new Schema().field("line", Types.STRING))
-    .registerTableSource("fileSource")
+//  tEnv.connect(new FileSystem().path(path))
+//    .withFormat(new OldCsv().field("line", Types.STRING).lineDelimiter("\n"))
+//    .withSchema(new Schema().field("line", Types.STRING))
+//    .registerTableSource("fileSource")
 
   val resultTable = tEnv.scan("fileSource")
     .groupBy('line)
