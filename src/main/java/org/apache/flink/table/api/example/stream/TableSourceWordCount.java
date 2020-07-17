@@ -29,9 +29,9 @@ public class TableSourceWordCount {
         @Override
         public DataStream<Row> getDataStream(StreamExecutionEnvironment execEnv) {
             val stream = execEnv.fromCollection(Arrays.asList(
-                    Row.of("Hello", 1L, LocalDateTime.now()),
-                    Row.of("Ciao", 2L, LocalDateTime.now()),
-                    Row.of("Hello", 3L, LocalDateTime.now()))
+                    Row.of("Hello", 1L),
+                    Row.of("Ciao", 2L),
+                    Row.of("Hello", 3L))
                     , getProducedTypeInformation());
             return stream;
         }
@@ -43,14 +43,14 @@ public class TableSourceWordCount {
         @Override
         public TableSchema getTableSchema() {
             return TableSchema.builder()
-                    .fields(new String[]{"word", "frequency", "time"}, new DataType[]{DataTypes.STRING(), DataTypes.BIGINT(), DataTypes.TIMESTAMP(3)})
+                    .fields(new String[]{"word", "frequency", "proctime"}, new DataType[]{DataTypes.STRING(), DataTypes.BIGINT(), DataTypes.TIMESTAMP()})
                     .build();
         }
 
         @Override
         public DataType getProducedDataType() {
             return TableSchema.builder()
-                    .fields(new String[]{"word", "frequency", "time"}, new DataType[]{DataTypes.STRING(), DataTypes.BIGINT(), DataTypes.TIMESTAMP(3)})
+                    .fields(new String[]{"word", "frequency"}, new DataType[]{DataTypes.STRING(), DataTypes.BIGINT()})
                     .build()
                     .toRowDataType();
         }
@@ -58,7 +58,7 @@ public class TableSourceWordCount {
         @Nullable
         @Override
         public String getProctimeAttribute() {
-            return "time";
+            return "proctime";
         }
     }
 
@@ -87,9 +87,8 @@ public class TableSourceWordCount {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
-        Table result = tEnv.fromTableSource(new RowTableSource())
-                .groupBy("word")
-                .select("word, count(1) as count, sum(frequency) as frequency");
+        Table table = tEnv.fromTableSource(new RowTableSource());
+        Table result = tEnv.sqlQuery("select word, frequency, proctime FROM " + table);
 
         tEnv.toRetractStream(result, Row.class).print();
         env.execute();
