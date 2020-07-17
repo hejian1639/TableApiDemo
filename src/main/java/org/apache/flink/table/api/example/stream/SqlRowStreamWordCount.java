@@ -17,10 +17,10 @@ public class SqlRowStreamWordCount {
                 Row.of("Ciao", 2L),
                 Row.of("Hello", 3L));
 
-        Table table = tEnv.fromDataStream(input, "word, frequency");
+        Table table = tEnv.fromDataStream(input, "word, frequency, proctime.proctime");
 
-        Table result = tEnv.sqlQuery("select word, frequency FROM " + table);
-        tEnv.toRetractStream(result, Row.class).print();
+        Table result = tEnv.sqlQuery("select word, frequency, proctime FROM " + table );
+        tEnv.toAppendStream(result, Row.class).print();
         env.execute();
     }
 }

@@ -28,16 +28,16 @@ public class TumbleWindowExample {
 
 
         // 初始数据
-        val log = env.fromCollection(Arrays.asList(
+        val log = env.fromElements(
                 //时间 14:53:00
-                new Tuple2<>("xiao_ming", 300),
+                Row.of("xiao_ming", 300),
                 //时间 14:53:09
-                new Tuple2<>("zhang_san", 303),
+                Row.of("zhang_san", 303),
                 //时间 14:53:12
-                new Tuple2<>("xiao_li", 204),
+                Row.of("xiao_li", 204),
                 //时间 14:53:21
-                new Tuple2<>("li_si", 208)
-        ));
+                Row.of("li_si", 208)
+        );
 
 
         // 转换为 Table
