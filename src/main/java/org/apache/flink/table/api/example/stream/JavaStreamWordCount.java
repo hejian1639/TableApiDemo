@@ -2,6 +2,7 @@ package org.apache.flink.table.api.example.stream;
 
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
@@ -19,7 +20,7 @@ public class JavaStreamWordCount {
         String path = "words.txt";
         tEnv.connect(new FileSystem().path(path))
                 .withFormat(new OldCsv().field("word", Types.STRING).lineDelimiter("\n"))
-                .withSchema(new Schema().field("word", Types.STRING))
+                .withSchema(new Schema().field("word", DataTypes.STRING()))
                 .inAppendMode()
                 .createTemporaryTable("fileSource");
 
