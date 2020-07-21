@@ -1,4 +1,4 @@
-package org.apache.flink.table.api.example.stream;
+package org.apache.flink.table.api.example.source;
 
 import com.alibaba.fastjson.JSONObject;
 import org.apache.flink.api.common.typeinfo.TypeInformation;

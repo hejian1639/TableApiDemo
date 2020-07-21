@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.api.example;
+package org.apache.flink.table.api.example.source;
 
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
