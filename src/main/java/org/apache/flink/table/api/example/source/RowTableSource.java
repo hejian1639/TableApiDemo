@@ -10,6 +10,7 @@ import org.apache.flink.table.sources.DefinedProctimeAttribute;
 import org.apache.flink.table.sources.StreamTableSource;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.utils.TypeConversions;
+import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo;
 import org.apache.flink.types.Row;
 
 import java.io.Serializable;
@@ -91,7 +92,7 @@ public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAt
     public TableSchema getTableSchema() {
         return TableSchema.builder()
                 .fields(fieldNames, fieldTypes)
-                .field("proctime", DataTypes.TIMESTAMP())
+                .field("proctime", TimeIndicatorTypeInfo.PROCTIME_INDICATOR)
                 .build();
     }
 

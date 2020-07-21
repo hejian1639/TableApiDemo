@@ -19,7 +19,7 @@ public class SqlRowStreamWordCount {
 
         Table table = tEnv.fromDataStream(input, "word, frequency, proctime.proctime");
 
-        Table result = tEnv.sqlQuery("select word, frequency, proctime FROM " + table );
+        Table result = tEnv.sqlQuery("select word, count(frequency) FROM " + table + " GROUP BY word, TUMBLE(proctime, INTERVAL '1' second)");
         tEnv.toAppendStream(result, Row.class).print();
         env.execute();
     }

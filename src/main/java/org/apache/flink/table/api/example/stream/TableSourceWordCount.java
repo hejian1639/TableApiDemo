@@ -4,6 +4,7 @@ import lombok.val;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.example.source.HttpStreamFunction;
 import org.apache.flink.table.api.example.source.RowTableSource;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
@@ -20,9 +21,10 @@ public class TableSourceWordCount {
                 .build();
 
         Table table = tEnv.fromTableSource(tableSource);
-        Table result = tEnv.sqlQuery("select word, frequency, proctime FROM " + table);
+        Table result = tEnv.sqlQuery("select word, count(frequency) as frequency FROM "
+                + table + " GROUP BY word, TUMBLE(proctime, INTERVAL '5' SECOND)");
 
-        tEnv.toRetractStream(result, Row.class).print();
+        tEnv.toAppendStream(result, Row.class).print();
         env.execute();
     }
 }
