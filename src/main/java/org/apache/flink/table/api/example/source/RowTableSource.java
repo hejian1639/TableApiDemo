@@ -2,12 +2,18 @@ package org.apache.flink.table.api.example.source;
 
 import com.alibaba.fastjson.JSONObject;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.sources.DefinedProctimeAttribute;
+import org.apache.flink.table.sources.DefinedRowtimeAttributes;
+import org.apache.flink.table.sources.RowtimeAttributeDescriptor;
 import org.apache.flink.table.sources.StreamTableSource;
+import org.apache.flink.table.sources.tsextractors.ExistingField;
+import org.apache.flink.table.sources.wmstrategies.AscendingTimestamps;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo;
@@ -17,15 +23,29 @@ import java.io.Serializable;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 
-public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAttribute, Serializable {
+public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAttribute, DefinedRowtimeAttributes, Serializable {
     transient DataStream<JSONObject> source;
     private String[] fieldNames;
     private DataType[] fieldTypes;
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    @Override
+    public List<RowtimeAttributeDescriptor> getRowtimeAttributeDescriptors() {
+        // Mark the "UserActionTime" attribute as event-time attribute.
+        // We create one attribute descriptor of "UserActionTime".
+        RowtimeAttributeDescriptor rowtimeAttrDescr = new RowtimeAttributeDescriptor(
+                "rowtime",
+                new ExistingField("rowtime"),
+                new AscendingTimestamps());
+        List<RowtimeAttributeDescriptor> listRowtimeAttrDescr = Collections.singletonList(rowtimeAttrDescr);
+        return listRowtimeAttrDescr;
     }
 
     public static class Builder {
@@ -76,12 +96,21 @@ public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAt
     @Override
     public DataStream<Row> getDataStream(StreamExecutionEnvironment execEnv) {
         return source.map(json -> {
-            Row row = new Row(fieldNames.length);
+            Row row = new Row(fieldNames.length + 1);
+            row.setField(0, json.get("rowtime"));
             for (int i = 0; i < fieldNames.length; i++) {
-                row.setField(i, json.get(fieldNames[i]));
+                row.setField(i + 1, json.get(fieldNames[i]));
             }
             return row;
-        }).returns(getProducedTypeInformation());
+        }).returns(getProducedTypeInformation())
+//                .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Row>() {
+//
+//                    @Override
+//                    public long extractAscendingTimestamp(Row row) {
+//                        return (Long) row.getField(0);
+//                    }
+//                })
+                ;
     }
 
     private TypeInformation<Row> getProducedTypeInformation() {
@@ -91,6 +120,7 @@ public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAt
     @Override
     public TableSchema getTableSchema() {
         return TableSchema.builder()
+                .field("rowtime", TimeIndicatorTypeInfo.ROWTIME_INDICATOR)
                 .fields(fieldNames, fieldTypes)
                 .field("proctime", TimeIndicatorTypeInfo.PROCTIME_INDICATOR)
                 .build();
@@ -99,6 +129,7 @@ public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAt
     @Override
     public DataType getProducedDataType() {
         return TableSchema.builder()
+                .field("rowtime", TimeIndicatorTypeInfo.ROWTIME_INDICATOR)
                 .fields(fieldNames, fieldTypes)
                 .build()
                 .toRowDataType();
