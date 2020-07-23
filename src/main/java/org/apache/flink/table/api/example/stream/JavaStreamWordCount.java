@@ -8,8 +8,11 @@ import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.table.descriptors.FileSystem;
 import org.apache.flink.table.descriptors.OldCsv;
+import org.apache.flink.table.descriptors.Rowtime;
 import org.apache.flink.table.descriptors.Schema;
 import org.apache.flink.types.Row;
+
+import java.sql.Timestamp;
 
 public class JavaStreamWordCount {
 
@@ -17,16 +20,23 @@ public class JavaStreamWordCount {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
-        String path = "words.txt";
+        String path = "words.csv";
         tEnv.connect(new FileSystem().path(path))
-                .withFormat(new OldCsv().field("word", Types.STRING).lineDelimiter("\n"))
-                .withSchema(new Schema().field("word", DataTypes.STRING()))
+                .withFormat(new OldCsv()
+                        .field("word", Types.STRING)
+                        .field("frequency", Types.INT)
+                        .field("rowtime", Types.SQL_TIMESTAMP)
+                        .lineDelimiter("\n"))
+                .withSchema(new Schema()
+                        .field("word", DataTypes.STRING())
+                        .field("frequency", DataTypes.INT())
+                        .field("rowtime", DataTypes.TIMESTAMP(3))
+                )
                 .inAppendMode()
                 .createTemporaryTable("fileSource");
 
-        Table result = tEnv.from("fileSource")
-                .groupBy("word")
-                .select("word, count(1) as count");
+        Table result = tEnv.sqlQuery("SELECT word, frequency, rowtime FROM fileSource");
+//        Table result = tEnv.sqlQuery("SELECT word, sum(frequency) AS frequency FROM fileSource GROUP BY word");
 
         tEnv.toRetractStream(result, Row.class).print();
         env.execute();

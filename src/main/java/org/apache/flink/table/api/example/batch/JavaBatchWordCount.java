@@ -4,6 +4,7 @@ import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.java.BatchTableEnvironment;
+import org.apache.flink.table.descriptors.FileSystem;
 import org.apache.flink.table.descriptors.OldCsv;
 import org.apache.flink.table.descriptors.Schema;
 import org.apache.flink.types.Row;
