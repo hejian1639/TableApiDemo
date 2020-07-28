@@ -5,15 +5,19 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
+import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.descriptors.Rowtime;
 import org.apache.flink.table.sources.DefinedProctimeAttribute;
 import org.apache.flink.table.sources.DefinedRowtimeAttributes;
 import org.apache.flink.table.sources.RowtimeAttributeDescriptor;
 import org.apache.flink.table.sources.StreamTableSource;
 import org.apache.flink.table.sources.tsextractors.ExistingField;
 import org.apache.flink.table.sources.wmstrategies.AscendingTimestamps;
+import org.apache.flink.table.sources.wmstrategies.PeriodicWatermarkAssigner;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo;
@@ -23,9 +27,7 @@ import java.io.Serializable;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAttribute, DefinedRowtimeAttributes, Serializable {
     transient DataStream<JSONObject> source;
@@ -43,7 +45,20 @@ public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAt
         RowtimeAttributeDescriptor rowtimeAttrDescr = new RowtimeAttributeDescriptor(
                 "rowtime",
                 new ExistingField("rowtime"),
-                new AscendingTimestamps());
+                new PeriodicWatermarkAssigner() {
+                    private final long maxTimeLag = 0; // 5 seconds
+
+
+                    @Override
+                    public void nextTimestamp(long timestamp) {
+                    }
+
+
+                    @Override
+                    public Watermark getWatermark() {
+                        return new Watermark(System.currentTimeMillis() - maxTimeLag);
+                    }
+                });
         List<RowtimeAttributeDescriptor> listRowtimeAttrDescr = Collections.singletonList(rowtimeAttrDescr);
         return listRowtimeAttrDescr;
     }
@@ -102,15 +117,7 @@ public class RowTableSource implements StreamTableSource<Row>, DefinedProctimeAt
                 row.setField(i + 1, json.get(fieldNames[i]));
             }
             return row;
-        }).returns(getProducedTypeInformation())
-//                .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Row>() {
-//
-//                    @Override
-//                    public long extractAscendingTimestamp(Row row) {
-//                        return (Long) row.getField(0);
-//                    }
-//                })
-                ;
+        }).returns(getProducedTypeInformation());
     }
 
     private TypeInformation<Row> getProducedTypeInformation() {
