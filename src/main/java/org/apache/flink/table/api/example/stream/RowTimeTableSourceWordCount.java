@@ -16,17 +16,18 @@ public class RowTimeTableSourceWordCount {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
-        tEnv.registerFunction("LAST_VALUE", new LastValueAggFunction.IntLastValueAggFunction());
+        tEnv.registerFunction("LAST_VALUE", new LastValueAggFunction());
         tEnv.registerFunction("countIf", new CountIfAggFunction());
         val source = env.addSource(new HttpStreamFunction(8002));
         RowTableSource tableSource = RowTableSource.builder().source(source)
                 .field("word", DataTypes.STRING())
                 .field("frequency", DataTypes.INT())
+                .field("content", DataTypes.STRING())
                 .build();
 
         Table table = tEnv.fromTableSource(tableSource);
-        Table result = tEnv.sqlQuery("select word, LAST_VALUE(frequency) as frequency FROM "
-                + table + " GROUP BY word, TUMBLE(proctime, INTERVAL '5' SECOND)");
+        Table result = tEnv.sqlQuery("select word, LAST_VALUE(frequency) as frequency, LAST_VALUE(content) as content FROM "
+                + table + " GROUP BY word, TUMBLE(proctime, INTERVAL '10' SECOND)");
 
         tEnv.toAppendStream(result, Row.class).print();
         env.execute();
