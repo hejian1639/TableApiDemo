@@ -1,4 +1,4 @@
-package org.apache.flink.table.api.axample.stream
+package org.apache.flink.table.api.example.stream
 
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment

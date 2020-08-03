@@ -1,4 +1,4 @@
-package org.apache.flink.table.api.axample.batch
+package org.apache.flink.table.api.example.batch
 
 import org.apache.flink.table.api.scala._
 import org.apache.flink.api.common.typeinfo.Types
