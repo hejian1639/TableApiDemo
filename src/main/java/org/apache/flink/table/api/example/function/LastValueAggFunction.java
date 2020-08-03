@@ -19,13 +19,17 @@
 package org.apache.flink.table.api.example.function;
 
 
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.table.functions.AggregateFunction;
 
 /**
  * built-in LastValue aggregate function.
  */
-public class LastValueAggFunction extends AggregateFunction<Object, Tuple2<Object, Long>> {
+public class LastValueAggFunction<T> extends AggregateFunction<T, Tuple2<T, Long>> {
 
     @Override
     public boolean isDeterministic() {
@@ -37,13 +41,13 @@ public class LastValueAggFunction extends AggregateFunction<Object, Tuple2<Objec
         return Tuple2.of(null, Long.MIN_VALUE);
     }
 
-    public void accumulate(Tuple2 acc, Object value) {
+    public void accumulate(Tuple2 acc, T value) {
         if (value != null) {
             acc.f0 = value;
         }
     }
 
-    public void accumulate(Tuple2<Object, Long> acc, Object value, Long order) {
+    public void accumulate(Tuple2<T, Long> acc, T value, Long order) {
         if (value != null && acc.f1 < order) {
             acc.f0 = value;
             acc.f1 = order;
@@ -51,15 +55,145 @@ public class LastValueAggFunction extends AggregateFunction<Object, Tuple2<Objec
     }
 
 
-    public void resetAccumulator(Tuple2<Object, Long> acc) {
+    public void resetAccumulator(Tuple2<T, Long> acc) {
         acc.f0 = null;
         acc.f1 = Long.MIN_VALUE;
     }
 
     @Override
-    public Object getValue(Tuple2<Object, Long> acc) {
+    public T getValue(Tuple2<T, Long> acc) {
         return acc.f0;
     }
 
+
+    @Override
+    public TypeInformation<Tuple2<T, Long>> getAccumulatorType() {
+        return new TupleTypeInfo(
+                Tuple2.class,
+                getResultType(),
+                BasicTypeInfo.LONG_TYPE_INFO);
+
+    }
+
+    /**
+     * Built-in Byte LastValue aggregate function.
+     */
+    public static class ByteLastValueAggFunction extends LastValueAggFunction<Byte> {
+        @Override
+        public Tuple2 createAccumulator() {
+            return Tuple2.of(null, Long.MIN_VALUE);
+        }
+
+        @Override
+        public TypeInformation<Byte> getResultType() {
+            return Types.BYTE;
+        }
+    }
+
+    /**
+     * Built-in Short LastValue aggregate function.
+     */
+    public static class ShortLastValueAggFunction extends LastValueAggFunction<Short> {
+        @Override
+        public Tuple2 createAccumulator() {
+            return Tuple2.of(null, Long.MIN_VALUE);
+        }
+
+        @Override
+        public TypeInformation<Short> getResultType() {
+            return Types.SHORT;
+        }
+    }
+
+    /**
+     * Built-in Int LastValue aggregate function.
+     */
+    public static class IntLastValueAggFunction extends LastValueAggFunction<Integer> {
+        @Override
+        public Tuple2 createAccumulator() {
+            return Tuple2.of(null, Long.MIN_VALUE);
+        }
+
+        @Override
+        public TypeInformation<Integer> getResultType() {
+            return Types.INT;
+        }
+    }
+
+    /**
+     * Built-in Long LastValue aggregate function.
+     */
+    public static class LongLastValueAggFunction extends LastValueAggFunction<Long> {
+        @Override
+        public Tuple2 createAccumulator() {
+            return Tuple2.of(null, Long.MIN_VALUE);
+        }
+
+        @Override
+        public TypeInformation<Long> getResultType() {
+            return Types.LONG;
+        }
+    }
+
+    /**
+     * Built-in Float LastValue aggregate function.
+     */
+    public static class FloatLastValueAggFunction extends LastValueAggFunction<Float> {
+        @Override
+        public Tuple2 createAccumulator() {
+            return Tuple2.of(null, Long.MIN_VALUE);
+        }
+
+        @Override
+        public TypeInformation<Float> getResultType() {
+            return Types.FLOAT;
+        }
+    }
+
+    /**
+     * Built-in Double LastValue aggregate function.
+     */
+    public static class DoubleLastValueAggFunction extends LastValueAggFunction<Double> {
+        @Override
+        public Tuple2 createAccumulator() {
+            return Tuple2.of(null, Long.MIN_VALUE);
+        }
+
+        @Override
+        public TypeInformation<Double> getResultType() {
+            return Types.DOUBLE;
+        }
+    }
+
+    /**
+     * Built-in Boolean LastValue aggregate function.
+     */
+    public static class BooleanLastValueAggFunction extends LastValueAggFunction<Boolean> {
+        @Override
+        public Tuple2 createAccumulator() {
+            return Tuple2.of(null, Long.MIN_VALUE);
+        }
+
+        @Override
+        public TypeInformation<Boolean> getResultType() {
+            return Types.BOOLEAN;
+        }
+    }
+
+    /**
+     * Built-in String LastValue aggregate function.
+     */
+    public static class StringLastValueAggFunction extends LastValueAggFunction<String> {
+        @Override
+        public Tuple2 createAccumulator() {
+            return Tuple2.of(null, Long.MIN_VALUE);
+        }
+
+        @Override
+        public TypeInformation<String> getResultType() {
+            return Types.STRING;
+        }
+
+    }
 
 }
