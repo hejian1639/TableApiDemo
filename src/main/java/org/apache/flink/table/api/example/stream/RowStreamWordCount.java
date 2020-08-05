@@ -23,8 +23,8 @@ public class RowStreamWordCount {
                 Row.of("Hello", 3L));
         Table table = tEnv.fromDataStream(input, "word, frequency");
 
-        Table result = table.select("word, frequency");
-        tEnv.toRetractStream(result, Row.class).print();
+        Table result = tEnv.sqlQuery("select word, frequency from " + table);
+        tEnv.toAppendStream(result, Row.class).print();
         env.execute();
     }
 }

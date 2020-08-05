@@ -76,6 +76,7 @@ public class HttpStreamFunction extends RichSourceFunction<JSONObject> {
         public void handle(HttpExchange exchange) throws IOException {
             InputStream is = exchange.getRequestBody();
             val object = JSON.parseObject(is2string(is));
+//            object.put("rowtime", System.currentTimeMillis());
             queue.offer(object);
 
 

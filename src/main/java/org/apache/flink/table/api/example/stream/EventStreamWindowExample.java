@@ -18,7 +18,7 @@ public class EventStreamWindowExample {
      * This generator generates watermarks that are lagging behind processing time by a fixed amount.
      * It assumes that elements arrive in Flink after a bounded delay.
      */
-    static class TimeLagWatermarkGenerator implements AssignerWithPeriodicWatermarks<JSONObject> {
+    static class ProcessTimeLagWatermarkGenerator implements AssignerWithPeriodicWatermarks<JSONObject> {
 
         private final long maxTimeLag = 0; // 5 seconds
 
@@ -34,16 +34,40 @@ public class EventStreamWindowExample {
         }
     }
 
+    static class EventTimeLagWatermarkGenerator implements AssignerWithPeriodicWatermarks<JSONObject> {
+        private static final long serialVersionUID = 1L;
+
+        private final long maxTimeLag = 0; // 5 seconds
+        private long currentTimestamp = maxTimeLag;
+
+
+        @Override
+        public long extractTimestamp(JSONObject element, long previousElementTimestamp) {
+            long time = element.getLongValue("rowtime");
+            if (time > currentTimestamp) {
+                currentTimestamp = time;
+            }
+            return time;
+        }
+
+        @Override
+        public Watermark getCurrentWatermark() {
+            // return the watermark as current time minus the maximum time lag
+            return new Watermark(currentTimestamp - maxTimeLag);
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         // 获取 environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
         env.addSource(new HttpStreamFunction(8002)).map(json -> {
 //            json.put("rowtime", System.currentTimeMillis());
             return json;
-        }).assignTimestampsAndWatermarks(new TimeLagWatermarkGenerator())
-                .keyBy(json -> Tuple2.of(json.getLongValue("rowtime") / TIME_UNIT, json.getString("word")), Types.TUPLE(Types.LONG, Types.STRING))
-                .timeWindow(Time.hours(1), Time.seconds(1))
+        }).assignTimestampsAndWatermarks(new EventTimeLagWatermarkGenerator())
+                .keyBy(json -> json.getString("word"))
+                .timeWindow(Time.seconds(60))
                 .reduce((json1, json2) -> {
                     JSONObject json = (JSONObject) json1.clone();
                     int v1 = json1.getInteger("frequency");
